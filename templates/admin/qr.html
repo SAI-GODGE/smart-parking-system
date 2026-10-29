@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Facility QR Codes{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Facility QR codes</h1>
+    <p class="text-secondary mb-0">
+      Print one QR code per entrance. Scanning it opens that facility's Quick Parking page.
+    </p>
+  </div>
+  <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+    <i class="bi bi-printer me-1"></i>Print this page
+  </button>
+</div>
+
+<div class="alert alert-info border-0 shadow-sm print-hide">
+  <h2 class="h6 fw-semibold"><i class="bi bi-info-circle-fill me-2"></i>How to test the QR codes</h2>
+  <ol class="mb-2 small">
+    <li>Scan a code with your phone camera, or open the printed link in a browser.</li>
+    <li>
+      <strong>On this computer:</strong> the generated address uses
+      <code>{{ base_url }}</code>. It works in a browser on this machine.
+    </li>
+    <li>
+      <strong>On a phone:</strong> a QR code pointing at <code>localhost</code> will not open.
+      Set <code>BASE_URL</code> in your <code>.env</code> to this computer's network address
+      (for example <code>http://192.168.1.5:5000</code>), restart the app, then regenerate the
+      QR codes here and scan again. Both devices must be on the same Wi-Fi network.
+    </li>
+  </ol>
+  <p class="mb-0 small">
+    Each code contains only the public address
+    <code>/parking/facility/&lt;id&gt;</code> &mdash; never the administrator dashboard.
+  </p>
+</div>
+
+{% if not entries %}
+<div class="card border-0 shadow-sm text-center p-5 text-muted">
+  No active facilities yet.
+</div>
+{% endif %}
+
+<div class="row g-4">
+  {% for entry in entries %}
+  <div class="col-12 col-md-6 col-xl-4">
+    <div class="card h-100 shadow-sm qr-print-card">
+      <div class="card-body text-center">
+        <h2 class="h6 fw-semibold mb-3">{{ entry.facility.name }}</h2>
+        <img src="{{ entry.image_url }}" alt="QR code for {{ entry.facility.name }}"
+             class="qr-image img-fluid mb-3" width="220" height="220">
+        <div class="small text-muted font-monospace text-break">{{ entry.url }}</div>
+      </div>
+      <div class="card-footer bg-white d-flex flex-wrap gap-2 justify-content-center print-hide">
+        <a href="{{ entry.image_url }}?download=1" class="btn btn-sm btn-primary">
+          <i class="bi bi-download me-1"></i>Download
+        </a>
+        <a href="{{ entry.image_url }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener">Open</a>
+        <a href="{{ url_for('quick.parking_facility', facility_id=entry.facility.id) }}"
+           class="btn btn-sm btn-outline-secondary">Preview page</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

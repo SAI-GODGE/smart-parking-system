@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Find my booking{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h1 class="h4 fw-bold mb-1">Find my booking</h1>
+        <p class="text-secondary small">
+          Enter the ticket code from your parking confirmation plus your vehicle registration
+          number. No account needed.
+        </p>
+
+        <form method="post" class="needs-validation" novalidate data-busy-form>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label for="ticket_code" class="form-label fw-semibold">Ticket code</label>
+            <input type="text" class="form-control form-control-lg font-monospace text-uppercase"
+                   id="ticket_code" name="ticket_code" placeholder="PK-..." maxlength="40"
+                   autocomplete="off" required>
+          </div>
+          <div class="mb-4">
+            <label for="vehicle_registration" class="form-label fw-semibold">Vehicle registration number</label>
+            <input type="text" class="form-control form-control-lg text-uppercase"
+                   id="vehicle_registration" name="vehicle_registration"
+                   placeholder="e.g. MH-12 AB 1234" maxlength="20" autocomplete="off" required>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="bi bi-search me-2"></i>Find my booking
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="text-center mt-3 small text-muted">
+      Have an account? <a href="{{ url_for('booking.my_bookings') }}">Open My Bookings</a>
+      &middot; Need to leave? <a href="{{ url_for('checkout.checkout') }}">Check out</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Parking Facilities{% endblock %}
+
+{% block content %}
+{% set heading = 'Choose a parking facility' if mode == 'advance' else ('Where are you parked?' if mode == 'quick' else 'Participating parking facilities') %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">{{ heading }}</h1>
+    <p class="text-secondary mb-0">
+      {% if mode == 'advance' %}
+        Step 1 of 4 &mdash; pick the place you are driving to.
+      {% elif mode == 'quick' %}
+        Choose the place where you are parked right now.
+      {% else %}
+        Every place listed here uses the same live availability records.
+      {% endif %}
+    </p>
+  </div>
+  <div class="btn-group" role="group" aria-label="Booking modes">
+    <a href="{{ url_for('booking.index') }}"
+       class="btn btn-sm {{ 'btn-primary' if mode == 'advance' else 'btn-outline-primary' }}">Book in Advance</a>
+    <a href="{{ url_for('main.facilities', mode='quick') }}"
+       class="btn btn-sm {{ 'btn-success' if mode == 'quick' else 'btn-outline-success' }}">Quick Parking</a>
+  </div>
+</div>
+
+{% if not rows %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-5 text-center">
+    <i class="bi bi-p-circle fs-1 text-muted"></i>
+    <h2 class="h5 mt-3">No parking facilities yet</h2>
+    <p class="text-secondary mb-3">Ask the administrator to add a parking facility.</p>
+    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">Back to home</a>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+  {% for row in rows %}
+  {% set f = row.facility %}
+  {% set c = row.counts %}
+  <div class="col-12 col-md-6 col-xl-4">
+    <div class="card h-100 shadow-sm facility-card">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <h2 class="h5 fw-semibold mb-1">{{ f.name }}</h2>
+          <span class="badge text-bg-success text-nowrap">
+            {{ c.vacant }} free
+          </span>
+        </div>
+        <p class="text-secondary small mb-2">
+          <i class="bi bi-geo-alt me-1"></i>{{ f.location_description }}
+          {% if f.address %}<br><span class="text-muted">{{ f.address }}</span>{% endif %}
+        </p>
+        <p class="small mb-3">
+          <span class="badge text-bg-light border">{{ f.parking_type }}</span>
+          <span class="badge text-bg-light border">Rs. {{ '%.0f'|format(f.hourly_rate) }}/hour</span>
+        </p>
+
+        <div class="row g-2 text-center small mb-3">
+          <div class="col-6">
+            <div class="border rounded py-2 h-100">
+              <div class="fw-semibold text-success">{{ c.vacant }}</div>
+              <div class="text-muted">Free now</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="border rounded py-2 h-100">
+              <div class="fw-semibold text-primary">{{ c.reserved }}</div>
+              <div class="text-muted">Reserved</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="border rounded py-2 h-100">
+              <div class="fw-semibold text-danger">{{ c.occupied }}</div>
+              <div class="text-muted">In use</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="border rounded py-2 h-100">
+              <div class="fw-semibold text-secondary">{{ c.maintenance }}</div>
+              <div class="text-muted">Closed</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-auto d-grid gap-2">
+          {% if mode == 'advance' %}
+            <a href="{{ url_for('booking.time_step', facility_id=f.id) }}" class="btn btn-primary">
+              <i class="bi bi-grid-3x3-gap me-2"></i>View Slots
+            </a>
+          {% elif mode == 'quick' %}
+            <a href="{{ url_for('quick.parking_facility', facility_id=f.id) }}" class="btn btn-success">
+              <i class="bi bi-lightning-charge me-2"></i>Find Parking Now
+            </a>
+          {% else %}
+            <div class="d-grid gap-2">
+              <a href="{{ url_for('booking.time_step', facility_id=f.id) }}" class="btn btn-primary">View Slots</a>
+              <a href="{{ url_for('quick.parking_facility', facility_id=f.id) }}" class="btn btn-outline-success">Park here now</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

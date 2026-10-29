@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">My Bookings</h1>
+    <p class="text-secondary mb-0">Signed in as {{ current_user.username }}.</p>
+  </div>
+  <a href="{{ url_for('booking.index') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>New booking
+  </a>
+</div>
+
+<h2 class="h5 fw-semibold mb-3">Upcoming &amp; active</h2>
+{% if not upcoming %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-4 text-center text-muted">
+    <i class="bi bi-calendar-x fs-1"></i>
+    <p class="mb-2 mt-2">You have no active parking bookings.</p>
+    <a href="{{ url_for('booking.index') }}" class="btn btn-outline-primary btn-sm">Book a space</a>
+  </div>
+</div>
+{% else %}
+<div class="row g-3 mb-4">
+  {% for r in upcoming %}
+  <div class="col-12 col-lg-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+          <div>
+            <div class="fw-semibold">{{ r.facility.name }}</div>
+            <div class="small text-muted">{{ r.mode_label }} &middot; {{ r.reservation_code }}</div>
+          </div>
+          <span class="badge text-bg-{{ 'primary' if r.status == 'booked' else 'success' }}">
+            {{ r.status_label }}
+          </span>
+        </div>
+
+        <div class="small mb-2">
+          <div><i class="bi bi-car-front me-1"></i>{{ r.vehicle_registration }}
+            ({{ VehicleType.LABELS[r.vehicle_type] }})</div>
+          <div><i class="bi bi-grid me-1"></i>Space {{ r.bay.label }} &middot; Floor {{ r.bay.floor }}, Zone {{ r.bay.zone }}</div>
+          <div><i class="bi bi-clock me-1"></i>
+            {{ r.start_time.strftime('%a, %d %b %Y') }},
+            {{ r.start_time.strftime('%I:%M %p').lstrip('0') }}
+            &rarr; {{ r.end_time.strftime('%I:%M %p').lstrip('0') }}
+          </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{{ url_for('booking.ticket', ticket_code=r.ticket_code) }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-ticket me-1"></i>View ticket
+          </a>
+          {% if r.status == 'booked' %}
+            <form method="post" action="{{ url_for('booking.ticket_check_in', ticket_code=r.ticket_code) }}"
+                  class="d-inline" data-busy-form>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-success">I have arrived</button>
+            </form>
+            <form method="post" action="{{ url_for('booking.cancel_my_booking', reservation_id=r.id) }}"
+                  class="d-inline" data-busy-form>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('Cancel this booking?');">Cancel</button>
+            </form>
+          {% elif r.status == 'checked_in' %}
+            <a href="{{ url_for('checkout.checkout', ticket=r.ticket_code) }}" class="btn btn-sm btn-primary">
+              Check out
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h2 class="h5 fw-semibold mb-3">History</h2>
+{% if not past %}
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-4 text-center text-muted">
+    No past bookings yet.
+  </div>
+</div>
+{% else %}
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Facility</th>
+          <th>Space</th>
+          <th>Vehicle</th>
+          <th>When</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in past %}
+        <tr>
+          <td>{{ r.facility.name }}</td>
+          <td>{{ r.bay.label }}</td>
+          <td>{{ r.vehicle_registration }}</td>
+          <td class="small">{{ r.start_time.strftime('%d %b %Y, %I:%M %p').replace(' 0', ' ') }}</td>
+          <td><span class="badge text-bg-secondary">{{ r.status_label }}</span></td>
+          <td class="text-end">
+            <a href="{{ url_for('booking.ticket', ticket_code=r.ticket_code) }}" class="btn btn-sm btn-outline-secondary">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if bay else 'Add' }} Space{% endblock %}
+
+{% block content %}
+{% set f = form if form else {} %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('admin.facilities') }}">Facilities</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('admin.bays', facility_id=facility.id) }}">{{ facility.name }}</a></li>
+    <li class="breadcrumb-item active">{{ 'Edit space' if bay else 'Add space' }}</li>
+  </ol>
+</nav>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <h1 class="h3 fw-bold mb-1">{{ 'Edit space ' ~ bay.label if bay else 'Add a parking space' }}</h1>
+    <p class="text-secondary mb-4">Facility: {{ facility.name }}</p>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <form method="post" class="needs-validation" novalidate data-busy-form>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-4">
+              <label for="slot_number" class="form-label fw-semibold">Slot number</label>
+              <input type="text" class="form-control form-control-lg" id="slot_number"
+                     name="slot_number" maxlength="20" value="{{ f.get('slot_number', '') }}"
+                     placeholder="e.g. 07" required>
+            </div>
+            <div class="col-sm-4">
+              <label for="floor" class="form-label fw-semibold">Floor</label>
+              <input type="number" class="form-control form-control-lg" id="floor" name="floor"
+                     min="0" max="50" value="{{ f.get('floor', 0) }}">
+              <div class="form-text">0 = ground floor.</div>
+            </div>
+            <div class="col-sm-4">
+              <label for="zone" class="form-label fw-semibold">Zone</label>
+              <input type="text" class="form-control form-control-lg" id="zone" name="zone"
+                     maxlength="20" value="{{ f.get('zone', 'A') }}" placeholder="e.g. A" required>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="vehicle_type" class="form-label fw-semibold">Vehicle type</label>
+              <select class="form-select" id="vehicle_type" name="vehicle_type">
+                {% for v in vehicle_types %}
+                  <option value="{{ v }}" {{ 'selected' if f.get('vehicle_type', 'any') == v }}>
+                    {{ VehicleType.LABELS[v] }}
+                  </option>
+                {% endfor %}
+              </select>
+              <div class="form-text">"Any vehicle" accepts every type.</div>
+            </div>
+            <div class="col-sm-6">
+              <label for="status" class="form-label fw-semibold">Status</label>
+              <select class="form-select" id="status" name="status">
+                {% for s in statuses %}
+                  <option value="{{ s }}" {{ 'selected' if f.get('status', 'vacant') == s }}>
+                    {{ BayStatus.LABELS[s] }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <label for="distance_from_gate" class="form-label fw-semibold">Distance from entrance (metres)</label>
+              <input type="number" class="form-control" id="distance_from_gate"
+                     name="distance_from_gate" min="0" max="10000"
+                     value="{{ f.get('distance_from_gate', 20) }}">
+              <div class="form-text">Used by the recommendation logic - closer is better.</div>
+            </div>
+            <div class="col-sm-6 d-flex align-items-end">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="is_accessible" name="is_accessible"
+                       value="1" {{ 'checked' if f.get('is_accessible') }}>
+                <label class="form-check-label" for="is_accessible">Accessible parking space</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+              {{ 'Save changes' if bay else 'Add space' }}
+            </button>
+            <a href="{{ url_for('admin.bays', facility_id=facility.id) }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

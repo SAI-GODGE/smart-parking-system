@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if facility else 'Add' }} Facility{% endblock %}
+
+{% block content %}
+{% set f = form if form else {} %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <h1 class="h3 fw-bold mb-1">{{ 'Edit ' ~ facility.name if facility else 'Add a parking facility' }}</h1>
+    <p class="text-secondary mb-4">
+      {{ 'Update the details drivers will see.' if facility else 'Create the place first, then add its parking spaces.' }}
+    </p>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <form method="post" class="needs-validation" novalidate data-busy-form>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label for="name" class="form-label fw-semibold">Facility name</label>
+            <input type="text" class="form-control form-control-lg" id="name" name="name"
+                   maxlength="120" value="{{ f.get('name', '') }}" placeholder="e.g. City Central Mall Parking" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="location_description" class="form-label fw-semibold">Short location</label>
+            <input type="text" class="form-control" id="location_description" name="location_description"
+                   maxlength="255" value="{{ f.get('location_description', '') }}"
+                   placeholder="e.g. MG Road, opposite the City Central Mall">
+            <div class="form-text">Shown on cards so drivers recognise the place.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="address" class="form-label fw-semibold">Full address</label>
+            <input type="text" class="form-control" id="address" name="address"
+                   maxlength="255" value="{{ f.get('address', '') }}">
+          </div>
+
+          <div class="mb-3">
+            <label for="parking_type" class="form-label fw-semibold">Parking type / description</label>
+            <input type="text" class="form-control" id="parking_type" name="parking_type"
+                   maxlength="80" value="{{ f.get('parking_type', 'General parking') }}"
+                   placeholder="e.g. Covered multi-level mall parking">
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-4">
+              <label for="hourly_rate" class="form-label fw-semibold">Rate per hour (Rs.)</label>
+              <input type="number" class="form-control" id="hourly_rate" name="hourly_rate"
+                     min="0" step="1" value="{{ f.get('hourly_rate', 40) }}">
+            </div>
+            <div class="col-sm-4">
+              <label for="default_duration_hours" class="form-label fw-semibold">Default stay (hours)</label>
+              <input type="number" class="form-control" id="default_duration_hours"
+                     name="default_duration_hours" min="1" max="72"
+                     value="{{ f.get('default_duration_hours', 4) }}">
+            </div>
+            <div class="col-sm-4">
+              <label for="hold_minutes" class="form-label fw-semibold">Hold period (minutes)</label>
+              <input type="number" class="form-control" id="hold_minutes" name="hold_minutes"
+                     min="0" value="{{ f.get('hold_minutes', 0) }}">
+              <div class="form-text">0 = use the global default (30 min).</div>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+              {{ 'Save changes' if facility else 'Create facility' }}
+            </button>
+            <a href="{{ url_for('admin.facilities') }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

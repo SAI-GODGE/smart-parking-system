@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Reservations{% endblock %}
+
+{% block content %}
+<h1 class="h3 fw-bold mb-1">Reservations</h1>
+<p class="text-secondary mb-3">All parking reservations recorded in the database (latest 200 shown).</p>
+
+<ul class="nav nav-pills mb-3 flex-wrap gap-1">
+  <li class="nav-item">
+    <a class="nav-link {{ 'active' if not current_status }}" href="{{ url_for('admin.reservations') }}">All</a>
+  </li>
+  {% for s in statuses %}
+    <li class="nav-item">
+      <a class="nav-link {{ 'active' if current_status == s }}"
+         href="{{ url_for('admin.reservations', status=s) }}">{{ labels[s] }}</a>
+    </li>
+  {% endfor %}
+</ul>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Codes</th>
+          <th>Facility / space</th>
+          <th>Vehicle</th>
+          <th>Window</th>
+          <th>Entry / exit</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="font-monospace small">
+            <div>{{ r.reservation_code }}</div>
+            <div class="text-muted">{{ r.ticket_code[:12] }}&hellip;</div>
+          </td>
+          <td class="small">
+            {{ r.facility.name }}<br>
+            <span class="text-muted">{{ r.bay.label }} &middot; {{ r.mode_label }}</span>
+          </td>
+          <td>{{ r.vehicle_registration }}<br><span class="small text-muted">{{ VehicleType.LABELS[r.vehicle_type] }}</span></td>
+          <td class="small">
+            {{ r.start_time.strftime('%d %b %y %I:%M %p').replace(' 0', ' ') }}<br>
+            &rarr; {{ r.end_time.strftime('%d %b %y %I:%M %p').replace(' 0', ' ') }}
+          </td>
+          <td class="small">
+            {{ r.entry_timestamp.strftime('%d %b %I:%M %p').replace(' 0', ' ') if r.entry_timestamp else '-' }}<br>
+            {{ r.exit_timestamp.strftime('%d %b %I:%M %p').replace(' 0', ' ') if r.exit_timestamp else '-' }}
+          </td>
+          <td>
+            {% set badge = {'booked': 'primary', 'checked_in': 'success', 'completed': 'secondary', 'cancelled': 'danger', 'expired': 'warning'} %}
+            <span class="badge text-bg-{{ badge.get(r.status, 'secondary') }}">{{ r.status_label }}</span>
+          </td>
+          <td class="text-end text-nowrap">
+            <a class="btn btn-sm btn-outline-secondary"
+               href="{{ url_for('booking.ticket', ticket_code=r.ticket_code) }}">Ticket</a>
+            {% if r.status == 'booked' %}
+              <form method="post" class="d-inline" data-busy-form
+                    action="{{ url_for('admin.reservation_action', reservation_id=r.id) }}{{ '?status=' ~ current_status if current_status }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="checkin">
+                <button class="btn btn-sm btn-success" type="submit">Check in</button>
+              </form>
+            {% elif r.status == 'checked_in' %}
+              <form method="post" class="d-inline" data-busy-form
+                    action="{{ url_for('admin.reservation_action', reservation_id=r.id) }}{{ '?status=' ~ current_status if current_status }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="checkout">
+                <button class="btn btn-sm btn-primary" type="submit">Check out</button>
+              </form>
+            {% endif %}
+            {% if r.status == 'booked' %}
+              <form method="post" class="d-inline" data-busy-form
+                    action="{{ url_for('admin.reservation_action', reservation_id=r.id) }}{{ '?status=' ~ current_status if current_status }}"
+                    onsubmit="return confirm('Cancel this reservation and release the space?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="cancel">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Cancel</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No reservations found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Administrator Dashboard</h1>
+    <p class="text-secondary mb-0">All figures below are read live from the database.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{{ url_for('admin.facilities') }}" class="btn btn-outline-primary btn-sm">Facilities</a>
+    <a href="{{ url_for('admin.reservations') }}" class="btn btn-outline-primary btn-sm">Reservations</a>
+    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary btn-sm">Users</a>
+    <a href="{{ url_for('admin.qr_codes') }}" class="btn btn-outline-primary btn-sm">QR codes</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md">
+    <div class="stat-card border"><div class="stat-num text-dark">{{ totals.total }}</div>
+      <div class="stat-label">Total spaces</div></div>
+  </div>
+  <div class="col-6 col-md">
+    <div class="stat-card border border-success"><div class="stat-num text-success">{{ totals.vacant }}</div>
+      <div class="stat-label">Vacant</div></div>
+  </div>
+  <div class="col-6 col-md">
+    <div class="stat-card border border-primary"><div class="stat-num text-primary">{{ totals.reserved }}</div>
+      <div class="stat-label">Reserved</div></div>
+  </div>
+  <div class="col-6 col-md">
+    <div class="stat-card border border-danger"><div class="stat-num text-danger">{{ totals.occupied }}</div>
+      <div class="stat-label">Occupied</div></div>
+  </div>
+  <div class="col-6 col-md">
+    <div class="stat-card border border-secondary"><div class="stat-num text-secondary">{{ totals.maintenance }}</div>
+      <div class="stat-label">Maintenance</div></div>
+  </div>
+  <div class="col-6 col-md">
+    <div class="stat-card border border-info"><div class="stat-num text-info">{{ active_count }}</div>
+      <div class="stat-label">Active bookings</div></div>
+  </div>
+  <div class="col-6 col-md">
+    <div class="stat-card border"><div class="stat-num text-dark">{{ user_count }}</div>
+      <div class="stat-label">User accounts</div></div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <h2 class="h6 fw-semibold mb-0">Facilities overview</h2>
+    <a href="{{ url_for('admin.facility_new') }}" class="btn btn-sm btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Add facility
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Facility</th>
+          <th class="text-end">Spaces</th>
+          <th class="text-end">Free</th>
+          <th class="text-end">Reserved</th>
+          <th class="text-end">In use</th>
+          <th class="text-end">Closed</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in facility_rows %}
+        <tr>
+          <td>{{ row.facility.name }}</td>
+          <td class="text-end">{{ row.counts.total }}</td>
+          <td class="text-end text-success fw-semibold">{{ row.counts.vacant }}</td>
+          <td class="text-end text-primary">{{ row.counts.reserved }}</td>
+          <td class="text-end text-danger">{{ row.counts.occupied }}</td>
+          <td class="text-end text-secondary">{{ row.counts.maintenance }}</td>
+          <td>
+            <span class="badge text-bg-{{ 'success' if row.facility.is_active else 'secondary' }}">
+              {{ 'Active' if row.facility.is_active else 'Hidden' }}
+            </span>
+          </td>
+          <td class="text-end text-nowrap">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.bays', facility_id=row.facility.id) }}">Spaces</a>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.facility_edit', facility_id=row.facility.id) }}">Edit</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <h2 class="h6 fw-semibold mb-0">Recent parking activity</h2>
+    <a href="{{ url_for('admin.reservations') }}" class="btn btn-sm btn-outline-secondary">All reservations</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Code</th>
+          <th>Facility</th>
+          <th>Space</th>
+          <th>Vehicle</th>
+          <th>Mode</th>
+          <th>Status</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in recent %}
+        <tr>
+          <td class="font-monospace small">{{ r.reservation_code }}</td>
+          <td class="small">{{ r.facility.name }}</td>
+          <td>{{ r.bay.label }}</td>
+          <td>{{ r.vehicle_registration }}</td>
+          <td class="small">{{ r.mode_label }}</td>
+          <td><span class="badge text-bg-secondary">{{ r.status_label }}</span></td>
+          <td class="small">{{ r.created_at.strftime('%d %b %H:%M') }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-muted py-3">No activity yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

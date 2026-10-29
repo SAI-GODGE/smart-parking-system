@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Parking ticket {{ reservation.ticket_code }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    {% set status_class = {
+      'booked': 'primary',
+      'checked_in': 'success',
+      'completed': 'secondary',
+      'cancelled': 'danger',
+      'expired': 'warning'
+    } %}
+
+    <div class="text-center mb-3">
+      <h1 class="h3 fw-bold mb-1">
+        {% if reservation.status == 'booked' %}
+          Your parking space is reserved
+        {% elif reservation.status == 'checked_in' %}
+          You are parked
+        {% elif reservation.status == 'completed' %}
+          Trip complete
+        {% else %}
+          Booking {{ reservation.status_label|lower }}
+        {% endif %}
+      </h1>
+      <span class="badge text-bg-{{ status_class.get(reservation.status, 'secondary') }} fs-6">
+        {{ reservation.status_label }}
+      </span>
+      {% if verified %}<span class="badge text-bg-light border fs-6 ms-1">Verified</span>{% endif %}
+    </div>
+
+    <div class="card shadow-sm ticket-card overflow-hidden">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-p-circle-fill me-2"></i>{{ reservation.facility.name }}</span>
+        <span class="small">{{ reservation.mode_label }}</span>
+      </div>
+      <div class="card-body p-4">
+        <div class="text-center mb-3 pb-3 border-bottom dashed">
+          <div class="text-muted small text-uppercase" style="letter-spacing:.08em;">Ticket code</div>
+          <code class="fs-4 fw-bold text-dark d-block mt-1" id="ticketCode">{{ reservation.ticket_code }}</code>
+          <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
+                  data-copy="#ticketCode">
+            <i class="bi bi-clipboard me-1"></i>Copy code
+          </button>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="text-muted small">Reservation code</div>
+            <div class="fw-semibold">{{ reservation.reservation_code }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Vehicle</div>
+            <div class="fw-semibold">{{ reservation.vehicle_registration }}
+              <span class="fw-normal text-muted">&middot; {{ VehicleType.LABELS[reservation.vehicle_type] }}</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Parking space</div>
+            <div class="fw-semibold">{{ reservation.bay.label }}
+              <span class="fw-normal text-muted">&middot; Floor {{ reservation.bay.floor }}, Zone {{ reservation.bay.zone }}</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">
+              {{ 'Arrival' if reservation.mode == 'advance' else 'Parked since' }}
+            </div>
+            <div class="fw-semibold">
+              {% if reservation.mode == 'advance' %}
+                {{ reservation.start_time.strftime('%a, %d %b %Y') }}<br>
+                {{ reservation.start_time.strftime('%I:%M %p').lstrip('0') }}
+                &rarr; {{ reservation.end_time.strftime('%I:%M %p').lstrip('0') }}
+              {% else %}
+                {{ (reservation.entry_timestamp or reservation.start_time).strftime('%a, %d %b %Y, %I:%M %p').replace(' 0', ' ') }}
+                <div class="small text-muted fw-normal">Expected until
+                  {{ reservation.end_time.strftime('%I:%M %p').lstrip('0') }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% if reservation.exit_timestamp %}
+          <div class="col-6">
+            <div class="text-muted small">Exit</div>
+            <div class="fw-semibold">{{ reservation.exit_timestamp.strftime('%a, %d %b %Y, %I:%M %p').replace(' 0', ' ') }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if reservation.status in ['booked', 'checked_in'] %}
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <h2 class="h6 fw-semibold mb-2"><i class="bi bi-signpost me-2 text-primary"></i>Directions</h2>
+        <p class="mb-0">{{ directions }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="d-grid gap-2 mt-4">
+      {% if reservation.status == 'booked' %}
+        <form method="post" action="{{ url_for('booking.ticket_check_in', ticket_code=reservation.ticket_code) }}"
+              data-busy-form>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-success btn-lg w-100">
+            <i class="bi bi-box-arrow-in-down me-2"></i>I have arrived &mdash; check in
+          </button>
+        </form>
+        <div class="small text-muted text-center">
+          Press this when you are at the parking entrance. Please arrive within the hold period,
+          otherwise the space is released automatically.
+        </div>
+      {% elif reservation.status == 'checked_in' %}
+        <a href="{{ url_for('checkout.checkout', ticket=reservation.ticket_code) }}" class="btn btn-primary btn-lg">
+          <i class="bi bi-box-arrow-right me-2"></i>Leave Parking &mdash; Check Out
+        </a>
+        <div class="small text-muted text-center">
+          When you leave, check out here so your space becomes free for the next driver.
+        </div>
+      {% endif %}
+
+      {% if can_cancel %}
+        <form method="post" action="{{ url_for('booking.cancel_my_booking', reservation_id=reservation.id) }}"
+              data-busy-form class="d-grid">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-danger"
+                  onclick="return confirm('Cancel this booking? The space will be released.');">
+            <i class="bi bi-x-circle me-2"></i>Cancel this booking
+          </button>
+        </form>
+      {% elif guest_cancel %}
+        <form method="post" action="{{ url_for('booking.lookup_cancel') }}" data-busy-form class="d-grid">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="ticket_code" value="{{ reservation.ticket_code }}">
+          <input type="hidden" name="vehicle_registration" value="{{ reservation.vehicle_registration }}">
+          <button type="submit" class="btn btn-outline-danger"
+                  onclick="return confirm('Cancel this booking? The space will be released.');">
+            <i class="bi bi-x-circle me-2"></i>Cancel this booking
+          </button>
+        </form>
+        <div class="small text-muted text-center">
+          Cancelling releases the space immediately.
+        </div>
+      {% endif %}
+
+      <div class="d-flex flex-wrap gap-2 justify-content-center">
+        <a href="{{ url_for('booking.my_bookings') }}" class="btn btn-outline-secondary btn-sm">My Bookings</a>
+        <a href="{{ url_for('booking.index') }}" class="btn btn-outline-secondary btn-sm">Book another space</a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary btn-sm">Home</a>
+      </div>
+    </div>
+
+    {% if reservation.status == 'booked' %}
+    <div class="alert alert-light border small mt-4 mb-0">
+      <i class="bi bi-lightbulb me-1"></i>
+      <strong>Keep this page or your ticket code.</strong> Guests can manage this booking any
+      time with <a href="{{ url_for('booking.lookup') }}">Find my booking</a> using the ticket
+      code and your vehicle registration.
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

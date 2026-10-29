@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout complete{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <div class="text-center mb-4">
+      <div class="success-icon bg-success text-white rounded-circle mx-auto mb-3">
+        <i class="bi bi-check-lg"></i>
+      </div>
+      <h1 class="h3 fw-bold mb-1">Thank you &mdash; checkout complete</h1>
+      <p class="text-secondary mb-0">
+        Your parking space has been released and is available for the next driver.
+      </p>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="text-muted small">Facility</div>
+            <div class="fw-semibold">{{ reservation.facility.name }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Space</div>
+            <div class="fw-semibold">{{ reservation.bay.label }}
+              <span class="fw-normal text-muted">&middot; Floor {{ reservation.bay.floor }}, Zone {{ reservation.bay.zone }}</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Vehicle</div>
+            <div class="fw-semibold">{{ reservation.vehicle_registration }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Ticket</div>
+            <div class="fw-semibold font-monospace">{{ reservation.ticket_code }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Entry recorded</div>
+            <div class="fw-semibold">
+              {{ (reservation.entry_timestamp or reservation.start_time).strftime('%d %b %Y, %I:%M %p').replace(' 0', ' ') }}
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Exit recorded</div>
+            <div class="fw-semibold">
+              {{ reservation.exit_timestamp.strftime('%d %b %Y, %I:%M %p').replace(' 0', ' ') }}
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Parking duration</div>
+            <div class="fw-semibold">
+              {% if duration_minutes >= 60 %}
+                {{ duration_minutes // 60 }}h {{ duration_minutes % 60 }}m
+              {% else %}
+                {{ duration_minutes }} minutes
+              {% endif %}
+            </div>
+          </div>
+          {% if fee is not none %}
+          <div class="col-6">
+            <div class="text-muted small">Parking fee (calculated)</div>
+            <div class="fw-bold fs-5">Rs. {{ '%.2f'|format(fee) }}</div>
+            <div class="text-muted xsmall">Payable at the exit counter &mdash; no online payment is taken.</div>
+          </div>
+          {% else %}
+          <div class="col-12">
+            <div class="text-muted small">Parking fee</div>
+            <div class="fw-semibold">Fee calculation is switched off at this facility.</div>
+          </div>
+          {% endif %}
+        </div>
+
+        <hr>
+        <div class="alert alert-light border mb-0 small">
+          <i class="bi bi-info-circle me-1"></i>
+          This is a <strong>recorded checkout</strong> &mdash; the website does not physically
+          detect your vehicle leaving.
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
+      <a href="{{ url_for('main.index') }}" class="btn btn-primary">Back to home</a>
+      <a href="{{ url_for('booking.index') }}" class="btn btn-outline-secondary">Book parking again</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

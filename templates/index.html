@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Parking Management System{% endblock %}
+
+{% block content %}
+<div class="text-center py-4 py-md-5">
+  <span class="badge text-bg-light border mb-3 d-inline-flex align-items-center">
+    <i class="bi bi-geo-alt me-2"></i>Software-based parking &middot; no sensors needed
+  </span>
+  <h1 class="display-4 fw-bold mb-3">Smart Parking Management System</h1>
+  <p class="lead text-secondary mx-auto" style="max-width: 40rem;">
+    Find a parking space. Book with ease. Park with confidence.
+  </p>
+</div>
+
+<div class="row g-4 justify-content-center pb-2">
+  <div class="col-12 col-md-6 col-lg-5">
+    <div class="card h-100 shadow-sm mode-card border-primary border-2">
+      <div class="card-body p-4 p-lg-5 text-center">
+        <div class="mode-icon bg-primary text-white rounded-circle mx-auto mb-3">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <h2 class="h4 fw-semibold mb-2">Book in Advance</h2>
+        <p class="text-secondary mb-4">
+          Reserve your parking space before you travel.
+        </p>
+        <a href="{{ url_for('booking.index') }}" class="btn btn-primary btn-lg w-100">
+          <i class="bi bi-calendar-plus me-2"></i>Book Parking
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-lg-5">
+    <div class="card h-100 shadow-sm mode-card border-success border-2">
+      <div class="card-body p-4 p-lg-5 text-center">
+        <div class="mode-icon bg-success text-white rounded-circle mx-auto mb-3">
+          <i class="bi bi-qr-code-scan"></i>
+        </div>
+        <h2 class="h4 fw-semibold mb-2">Quick Parking</h2>
+        <p class="text-secondary mb-4">
+          Already at the parking area? Scan the QR code or choose a facility to find an
+          available space.
+        </p>
+        <a href="{{ url_for('main.facilities', mode='quick') }}" class="btn btn-success btn-lg w-100">
+          <i class="bi bi-lightning-charge me-2"></i>Find Parking Now
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="text-center mt-4">
+  <a href="{{ url_for('main.facilities') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-buildings me-2"></i>View participating parking facilities
+  </a>
+</div>
+
+<div class="row justify-content-center mt-5">
+  <div class="col-lg-9">
+    <div class="card bg-light border-0">
+      <div class="card-body p-4 d-flex flex-column flex-sm-row align-items-sm-center gap-3">
+        <i class="bi bi-shield-check fs-2 text-primary"></i>
+        <div class="flex-grow-1">
+          <h2 class="h6 fw-semibold mb-1">How availability works</h2>
+          <p class="mb-0 text-secondary small">
+            Every space you see is managed by digital records: when a driver books, parks or
+            checks out, the status updates for everyone. There are no physical sensors or
+            cameras &mdash; staff and drivers keep the records accurate together.
+          </p>
+        </div>
+        <a href="{{ url_for('main.how_it_works') }}" class="btn btn-outline-primary text-nowrap">
+          Learn more
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

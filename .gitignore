@@ -1,0 +1,29 @@
+# Secrets and local environment
+.env
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Generated databases and local instance files
+instance/
+*.db
+*.sqlite3
+*.sqlite
+
+# Test / tooling caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

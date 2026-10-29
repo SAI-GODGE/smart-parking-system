@@ -1,0 +1,345 @@
+/* Smart Parking Management System - custom styles */
+
+:root {
+  --sp-vacant: #16a34a;
+  --sp-vacant-bg: #dcfce7;
+  --sp-reserved: #2563eb;
+  --sp-reserved-bg: #dbeafe;
+  --sp-occupied: #dc2626;
+  --sp-occupied-bg: #fee2e2;
+  --sp-maintenance: #6b7280;
+  --sp-maintenance-bg: #e5e7eb;
+}
+
+body {
+  background: #f6f8fb;
+  color: #1f2937;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+/* ---------- Home page ---------- */
+
+.mode-card {
+  border-radius: 1rem;
+  transition: box-shadow 0.15s ease;
+}
+
+.mode-card:hover {
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12) !important;
+}
+
+.mode-icon {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.facility-card {
+  border-radius: 0.75rem;
+}
+
+/* ---------- Booking steps ---------- */
+
+.booking-steps {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1.5rem;
+}
+
+.step-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 2rem;
+  background: #eef1f6;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.step-pill.active {
+  background: #0d6efd;
+  color: #fff;
+  font-weight: 600;
+}
+
+.step-pill.done {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.step-num {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex: 0 0 auto;
+}
+
+.step-pill.active .step-num {
+  background: #fff;
+  color: #0d6efd;
+}
+
+@media (max-width: 576px) {
+  .step-label {
+    display: none;
+  }
+  .step-pill {
+    justify-content: center;
+  }
+}
+
+/* ---------- Parking map ---------- */
+
+.bay-floor-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin: 1.25rem 0 0.6rem;
+}
+
+.bay-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 0.6rem;
+}
+
+.bay-tile {
+  border: 2px solid transparent;
+  border-radius: 0.65rem;
+  padding: 0.6rem 0.35rem 0.5rem;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  line-height: 1.15;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  min-height: 78px;
+  justify-content: center;
+}
+
+.bay-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+}
+
+.bay-tile:focus-visible {
+  outline: 3px solid #1f2937;
+  outline-offset: 2px;
+}
+
+.bay-label {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.bay-meta {
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+
+.bay-status-text {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.bay-tile.status-vacant {
+  background: var(--sp-vacant-bg);
+  border-color: var(--sp-vacant);
+  color: #14532d;
+}
+
+.bay-tile.status-reserved {
+  background: var(--sp-reserved-bg);
+  border-color: var(--sp-reserved);
+  color: #1e3a8a;
+}
+
+.bay-tile.status-occupied {
+  background: var(--sp-occupied-bg);
+  border-color: var(--sp-occupied);
+  color: #7f1d1d;
+}
+
+.bay-tile.status-maintenance {
+  background: var(--sp-maintenance-bg);
+  border-color: var(--sp-maintenance);
+  color: #374151;
+}
+
+.bay-tile.is-blocked {
+  cursor: not-allowed;
+}
+
+.bay-tile.is-blocked .bay-label {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  opacity: 0.75;
+}
+
+.bay-tile.selected {
+  outline: 3px solid #111827;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 6px rgba(17, 24, 39, 0.12);
+}
+
+.bay-tile.just-updated {
+  animation: flash 0.6s ease;
+}
+
+@keyframes flash {
+  0% { box-shadow: 0 0 0 6px rgba(13, 110, 253, 0.4); }
+  100% { box-shadow: none; }
+}
+
+/* ---------- Legend & chips ---------- */
+
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid;
+  border-radius: 2rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.legend-vacant { background: var(--sp-vacant-bg); border-color: var(--sp-vacant); color: #14532d; }
+.legend-reserved { background: var(--sp-reserved-bg); border-color: var(--sp-reserved); color: #1e3a8a; }
+.legend-occupied { background: var(--sp-occupied-bg); border-color: var(--sp-occupied); color: #7f1d1d; }
+.legend-maintenance { background: var(--sp-maintenance-bg); border-color: var(--sp-maintenance); color: #374151; }
+
+.legend-chip .bi-circle-fill { font-size: 0.6rem; }
+.legend-vacant .bi-circle-fill { color: var(--sp-vacant); }
+.legend-reserved .bi-circle-fill { color: var(--sp-reserved); }
+.legend-occupied .bi-circle-fill { color: var(--sp-occupied); }
+.legend-maintenance .bi-circle-fill { color: var(--sp-maintenance); }
+
+/* ---------- Stat cards ---------- */
+
+.stat-card {
+  border-radius: 0.7rem;
+  background: #fff;
+  padding: 0.85rem 0.5rem;
+  height: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.stat-num {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+/* ---------- Ticket ---------- */
+
+.ticket-card {
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+.ticket-card .card-header {
+  padding: 0.9rem 1.25rem;
+}
+
+.success-icon {
+  width: 76px;
+  height: 76px;
+  font-size: 2.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rec-badge {
+  width: 48px;
+  height: 48px;
+  font-size: 1.4rem;
+  flex: 0 0 auto;
+}
+
+/* ---------- Misc ---------- */
+
+.text-break {
+  word-break: break-all;
+}
+
+.font-monospace.form-control,
+input.font-monospace {
+  letter-spacing: 0.04em;
+}
+
+.qr-image {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  background: #fff;
+}
+
+.dashed {
+  border-style: dashed !important;
+}
+
+@media (max-width: 576px) {
+  .bay-grid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  }
+}
+
+/* ---------- Print (QR page) ---------- */
+
+@media print {
+  .navbar,
+  footer,
+  .alert,
+  .card-footer,
+  .btn,
+  .breadcrumb {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .qr-print-card {
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qr-image {
+    width: 260px;
+    height: 260px;
+  }
+}

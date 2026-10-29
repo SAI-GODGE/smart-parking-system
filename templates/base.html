@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Smart Parking Management System - find a parking space, book with ease, park with confidence.">
+  <title>{% block title %}Smart Parking Management System{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="{{ url_for('main.index') }}">
+      <i class="bi bi-p-circle-fill me-2"></i>Smart Parking
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.index') }}">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('booking.index') }}">Book in Advance</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.facilities', mode='quick') }}">Quick Parking</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.facilities') }}">Facilities</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.how_it_works') }}">How it Works</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('checkout.checkout') }}">Check Out</a></li>
+      </ul>
+      <ul class="navbar-nav">
+        {% if current_user.is_authenticated %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('booking.my_bookings') }}">My Bookings</a></li>
+          {% if current_user.is_operator %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('operator.dashboard') }}">Operator</a></li>
+          {% endif %}
+          {% if current_user.is_admin %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+          {% endif %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
+               aria-expanded="false">
+              <i class="bi bi-person-circle me-1"></i>{{ current_user.username }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><span class="dropdown-item-text small text-muted">{{ current_user.display_role }}</span></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="dropdown-item" type="submit">Sign out</button>
+                </form>
+              </li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Sign in</a></li>
+          <li class="nav-item ms-lg-2">
+            <a class="btn btn-light btn-sm mt-1 mt-lg-0" href="{{ url_for('auth.register') }}">Create account</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-4">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+             role="alert">
+          <i class="bi {{ 'bi-exclamation-triangle-fill' if category == 'error' else ('bi-check-circle-fill' if category == 'success' else 'bi-info-circle-fill') }} me-2"></i>
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="border-top bg-white">
+  <div class="container py-4 text-center text-muted small">
+    <p class="mb-1">
+      <strong>Smart Parking Management System</strong> &mdash; availability shown here is
+      <strong>recorded</strong> from user and operator actions. This system does not use
+      physical sensors, cameras or barriers.
+    </p>
+    <p class="mb-0">
+      <a href="{{ url_for('main.how_it_works') }}" class="link-secondary">How it works</a>
+      &middot; <a href="{{ url_for('main.facilities') }}" class="link-secondary">Parking facilities</a>
+    </p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

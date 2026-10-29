@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Facilities{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Parking facilities</h1>
+    <p class="text-secondary mb-0">Add places, edit details and control what drivers can see.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.qr_codes') }}" class="btn btn-outline-primary">QR codes</a>
+    <a href="{{ url_for('admin.facility_new') }}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Add facility
+    </a>
+  </div>
+</div>
+
+{% if not rows %}
+<div class="card border-0 shadow-sm text-center p-5 text-muted">
+  <i class="bi bi-buildings fs-1"></i>
+  <p class="mt-2 mb-3">No facilities have been created yet.</p>
+  <a href="{{ url_for('admin.facility_new') }}" class="btn btn-primary">Add the first facility</a>
+</div>
+{% else %}
+<div class="row g-3">
+  {% for row in rows %}
+  {% set f = row.facility %}
+  <div class="col-12 col-lg-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div>
+            <h2 class="h5 fw-semibold mb-1">{{ f.name }}</h2>
+            <div class="small text-muted">{{ f.location_description }}</div>
+          </div>
+          <span class="badge text-bg-{{ 'success' if f.is_active else 'secondary' }}">
+            {{ 'Active' if f.is_active else 'Hidden' }}
+          </span>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 my-3">
+          <span class="badge text-bg-light border">{{ f.parking_type }}</span>
+          <span class="badge text-bg-light border">{{ row.counts.total }} spaces</span>
+          <span class="badge text-bg-light border">Rs. {{ '%.0f'|format(f.hourly_rate) }}/h</span>
+          <span class="badge text-bg-light border">Default {{ f.default_duration_hours }}h stay</span>
+          {% if f.hold_minutes %}<span class="badge text-bg-light border">{{ f.hold_minutes }} min hold</span>{% endif %}
+        </div>
+
+        <div class="row g-2 text-center small">
+          <div class="col"><div class="fw-semibold text-success">{{ row.counts.vacant }}</div>Free</div>
+          <div class="col"><div class="fw-semibold text-primary">{{ row.counts.reserved }}</div>Reserved</div>
+          <div class="col"><div class="fw-semibold text-danger">{{ row.counts.occupied }}</div>In use</div>
+          <div class="col"><div class="fw-semibold text-secondary">{{ row.counts.maintenance }}</div>Closed</div>
+        </div>
+      </div>
+      <div class="card-footer bg-white d-flex flex-wrap gap-2">
+        <a href="{{ url_for('admin.bays', facility_id=f.id) }}" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-grid-3x3-gap me-1"></i>Manage spaces
+        </a>
+        <a href="{{ url_for('admin.facility_edit', facility_id=f.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+        <a href="{{ url_for('quick.parking_facility', facility_id=f.id) }}" class="btn btn-sm btn-outline-secondary">View as driver</a>
+        <form method="post" action="{{ url_for('admin.facility_toggle', facility_id=f.id) }}" class="ms-auto" data-busy-form>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm btn-outline-warning">
+            {{ 'Hide from drivers' if f.is_active else 'Publish' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

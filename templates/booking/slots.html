@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% from "_partials.html" import steps, bay_grid, legend %}
+
+{% block title %}Pick a space - {{ facility.name }}{% endblock %}
+
+{% block content %}
+{{ steps(3) }}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+  <div>
+    <span class="text-muted small">Step 3 of 4 &middot; {{ facility.name }}</span>
+    <h1 class="h4 fw-bold mb-1">Pick your parking space</h1>
+    <p class="text-secondary mb-0">
+      <i class="bi bi-calendar-event me-1"></i>
+      {{ start.strftime('%a, %d %b %Y') }}, {{ start.strftime('%I:%M %p').lstrip('0') }}
+      &rarr; {{ end.strftime('%a, %d %b %Y') }}, {{ end.strftime('%I:%M %p').lstrip('0') }}
+      &middot; {{ duration_hours }}h &middot; {{ VehicleType.LABELS[vehicle_type] }}
+      {% if needs_accessible %} &middot; accessible space{% endif %}
+      &nbsp;
+      <a href="{{ url_for('booking.time_step', facility_id=facility.id) }}" class="small">(change)</a>
+    </p>
+  </div>
+  <div class="text-end">
+    <div class="fs-4 fw-bold text-success" id="freeCount">{{ free_count }}</div>
+    <div class="small text-muted text-uppercase" style="letter-spacing:.05em;">spaces free at your time</div>
+  </div>
+</div>
+
+{% if recommendation %}
+<div class="card border-success border-2 shadow-sm mb-4" id="recommendationCard">
+  <div class="card-body d-flex flex-wrap align-items-center gap-3">
+    <div class="rec-badge bg-success text-white rounded-circle d-flex align-items-center justify-content-center">
+      <i class="bi bi-stars"></i>
+    </div>
+    <div class="flex-grow-1">
+      <div class="fw-semibold">Best match: space {{ recommendation.label }}
+        <span class="text-muted fw-normal small">&mdash; Floor {{ recommendation.floor }}, Zone {{ recommendation.zone }}</span>
+      </div>
+      <div class="small text-secondary">{{ recommendation_reason }}</div>
+    </div>
+    <button type="button" class="btn btn-success" id="chooseRecommended"
+            data-bay-id="{{ recommendation.id }}">
+      Choose this space
+    </button>
+  </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-3 align-items-end mb-3">
+      <div>
+        <label for="floorFilter" class="form-label small fw-semibold mb-1">Floor</label>
+        <select id="floorFilter" class="form-select form-select-sm">
+          <option value="">All floors</option>
+          {% for floor in floors %}
+            <option value="{{ floor }}">{{ 'Ground' if floor == 0 else 'Floor ' ~ floor }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="zoneFilter" class="form-label small fw-semibold mb-1">Zone</label>
+        <select id="zoneFilter" class="form-select form-select-sm">
+          <option value="">All zones</option>
+          {% for zone in zones %}
+            <option value="{{ zone }}">Zone {{ zone }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="small text-muted mb-1">
+        <i class="bi bi-hand-index-thumb me-1"></i>Tap a green space to select it.
+      </div>
+    </div>
+
+    {{ legend() }}
+
+    <div id="bayGridWrap" data-refresh-url="{{ url_for('main.availability_api', facility_id=facility.id, start=start.isoformat(timespec='seconds'), end=end.isoformat(timespec='seconds'), vehicle_type=vehicle_type, accessible='1' if needs_accessible else '0') }}">
+      {% if bays %}
+        {{ bay_grid(bays) }}
+      {% else %}
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-grid-3x3-gap fs-1"></i>
+          <p class="mb-0 mt-2">This facility has no parking spaces configured yet.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <div id="bayNotice" class="alert alert-warning mt-3 mb-0 d-none" role="alert"></div>
+
+    {% if free_count == 0 %}
+    <div class="alert alert-danger mt-3 mb-0">
+      <h2 class="h6"><i class="bi bi-emoji-frown me-2"></i>No free spaces at that time</h2>
+      <p class="mb-2">Every space is taken for your chosen time. You can:</p>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('booking.time_step', facility_id=facility.id) }}" class="btn btn-sm btn-primary">Change the date or time</a>
+        <a href="{{ url_for('booking.index') }}" class="btn btn-sm btn-outline-secondary">Choose another facility</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4" id="confirmPanel">
+  <div class="card-body p-4">
+    <h2 class="h5 fw-semibold mb-1">Step 4 &mdash; Confirm your booking</h2>
+    <p class="text-secondary small">
+      You have selected <strong id="selectedLabel">no space yet</strong>.
+      Enter your vehicle registration to finish.
+    </p>
+
+    <form method="post" action="{{ url_for('booking.confirm', facility_id=facility.id) }}"
+          id="confirmForm" class="row g-3" data-busy-form>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="date" value="{{ start.strftime('%Y-%m-%d') }}">
+      <input type="hidden" name="time" value="{{ start.strftime('%H:%M') }}">
+      <input type="hidden" name="duration" value="{{ duration_hours }}">
+      <input type="hidden" name="vehicle_type" value="{{ vehicle_type }}">
+      <input type="hidden" name="needs_accessible" value="{{ '1' if needs_accessible else '0' }}">
+      <input type="hidden" name="bay_id" id="bayIdInput" value="">
+
+      <div class="col-12 col-md-6">
+        <label for="vehicle_registration" class="form-label fw-semibold">Vehicle registration number</label>
+        <input type="text" class="form-control form-control-lg text-uppercase" id="vehicle_registration"
+               name="vehicle_registration" maxlength="20" placeholder="e.g. MH-12 AB 1234"
+               autocomplete="off" required>
+        <div class="form-text">Exactly as printed on your number plate.</div>
+      </div>
+
+      <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
+        <button type="submit" class="btn btn-primary btn-lg" id="confirmBtn" disabled>
+          <i class="bi bi-check2-circle me-2"></i>Confirm booking
+        </button>
+        <a href="{{ url_for('booking.time_step', facility_id=facility.id) }}" class="btn btn-outline-secondary btn-lg">
+          Start over
+        </a>
+        <span class="small text-muted ms-auto">
+          <i class="bi bi-shield-check me-1"></i>Your space is re-checked by the server before it is saved.
+        </span>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="alert alert-light border small">
+  <strong>Reservation rule:</strong> your space is held until
+  <strong>{{ hold_minutes }} minutes</strong> after your arrival time. If you do not arrive by
+  then, the booking expires and the space is offered to someone else.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.SLOTS_CONFIG = {
+    selectHint: "Tap a green free space to select it.",
+    takenMessage: "That space is not free for your chosen time. Please pick a green one.",
+    selectedMessage: "Space {label} selected."
+  };
+</script>
+{% endblock %}

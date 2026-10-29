@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Create account{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5 col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h1 class="h4 fw-bold mb-1">Create your account</h1>
+        <p class="text-secondary small">
+          Save your bookings, see them in one place and cancel with a tap.
+        </p>
+        <form method="post" class="needs-validation" novalidate data-busy-form>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label for="username" class="form-label fw-semibold">Username</label>
+            <input type="text" class="form-control form-control-lg" id="username"
+                   name="username" minlength="3" maxlength="32" autocomplete="username"
+                   pattern="[A-Za-z0-9_]+" required>
+            <div class="form-text">3-32 letters, numbers or underscores.</div>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label fw-semibold">Email <span class="text-muted fw-normal">(optional)</span></label>
+            <input type="email" class="form-control" id="email" name="email"
+                   maxlength="120" autocomplete="email">
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label fw-semibold">Password</label>
+            <input type="password" class="form-control form-control-lg" id="password"
+                   name="password" minlength="8" autocomplete="new-password" required>
+            <div class="form-text">At least 8 characters.</div>
+          </div>
+          <div class="mb-4">
+            <label for="confirm_password" class="form-label fw-semibold">Confirm password</label>
+            <input type="password" class="form-control form-control-lg" id="confirm_password"
+                   name="confirm_password" minlength="8" autocomplete="new-password" required>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">Create account</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <p class="text-center small text-muted mt-3 mb-0">
+      Already registered? <a href="{{ url_for('auth.login') }}">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

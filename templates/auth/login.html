@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5 col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h1 class="h4 fw-bold mb-1">Sign in</h1>
+        <p class="text-secondary small">
+          Accounts are optional &mdash; guests can book and check out with a ticket code.
+        </p>
+        <form method="post" class="needs-validation" novalidate data-busy-form>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label for="username" class="form-label fw-semibold">Username</label>
+            <input type="text" class="form-control form-control-lg" id="username"
+                   name="username" autocomplete="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label fw-semibold">Password</label>
+            <input type="password" class="form-control form-control-lg" id="password"
+                   name="password" autocomplete="current-password" required>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="remember" name="remember" value="1">
+            <label class="form-check-label" for="remember">Keep me signed in</label>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">Sign in</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <p class="text-center small text-muted mt-3 mb-0">
+      New here? <a href="{{ url_for('auth.register') }}">Create an account</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

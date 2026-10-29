@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Check Out{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <span class="text-muted small">Leaving the parking area?</span>
+        <h1 class="h4 fw-bold mb-1">Check Out</h1>
+        <p class="text-secondary small">
+          Enter your ticket code and vehicle registration. The space is released for the next
+          driver as soon as you check out.
+        </p>
+
+        <form method="post" class="needs-validation" novalidate data-busy-form>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label for="ticket_code" class="form-label fw-semibold">Ticket code</label>
+            <input type="text" class="form-control form-control-lg font-monospace text-uppercase"
+                   id="ticket_code" name="ticket_code" maxlength="40"
+                   placeholder="PK-..." autocomplete="off"
+                   value="{{ ticket_prefill }}" required>
+            <div class="form-text">Shown on your confirmation page and ticket.</div>
+          </div>
+          <div class="mb-4">
+            <label for="vehicle_registration" class="form-label fw-semibold">Vehicle registration number</label>
+            <input type="text" class="form-control form-control-lg text-uppercase"
+                   id="vehicle_registration" name="vehicle_registration" maxlength="20"
+                   placeholder="e.g. MH-12 AB 1234" autocomplete="off" required>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="bi bi-box-arrow-right me-2"></i>Complete checkout
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="text-center mt-3 small text-muted">
+      Need your booking? <a href="{{ url_for('booking.lookup') }}">Find my booking</a>
+      &middot; <a href="{{ url_for('main.index') }}">Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

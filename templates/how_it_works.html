@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}How it Works{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <h1 class="h2 fw-bold mb-2">How it works</h1>
+    <p class="lead text-secondary mb-4">
+      Two simple ways to park, one shared set of records.
+    </p>
+
+    <div class="alert alert-info border-0 shadow-sm">
+      <h2 class="h6 fw-semibold"><i class="bi bi-info-circle-fill me-2"></i>About availability</h2>
+      <p class="mb-0">
+        This system is <strong>fully software based</strong>. Parking status is updated when a
+        driver or a parking operator records an action &mdash; booking, arrival (check-in) or
+        departure (check out). There are <strong>no physical sensors, RFID tags, cameras or
+        barriers</strong>, so the accuracy of the display depends on these records being kept
+        up to date.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h2 class="h5 fw-semibold"><i class="bi bi-calendar-check me-2 text-primary"></i>1. Book in Advance</h2>
+            <ol class="small text-secondary ps-3 mb-2">
+              <li>Choose a parking facility.</li>
+              <li>Pick your arrival date, time, how long you will park, and your vehicle type.</li>
+              <li>Tap a free space &mdash; or take the recommended one.</li>
+              <li>Enter your vehicle registration and confirm. Your digital ticket is ready.</li>
+            </ol>
+            <p class="small mb-0">
+              When you arrive, open <strong>My Bookings</strong> (or your ticket link) and check
+              in. If you do not arrive, the space is automatically released
+              <strong>30 minutes after your scheduled arrival</strong> (the hold period can be
+              changed per facility) so it is not blocked forever.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h2 class="h5 fw-semibold"><i class="bi bi-qr-code me-2 text-success"></i>2. Quick Parking</h2>
+            <ol class="small text-secondary ps-3 mb-2">
+              <li>Scan the QR code at the entrance (or pick the facility on this site).</li>
+              <li>See the live grid of spaces &mdash; green means free.</li>
+              <li>Tap a free space, enter your vehicle registration and type.</li>
+              <li>Confirm. Your slot and directions appear with your ticket code.</li>
+            </ol>
+            <p class="small mb-0">
+              When you leave, use <strong>Check Out</strong> and enter your ticket code. The
+              space immediately becomes free for the next driver.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <h2 class="h5 fw-semibold mb-3">What the colours mean</h2>
+        <div class="d-flex flex-wrap gap-3">
+          <span class="legend-chip legend-vacant">Vacant &mdash; free to book</span>
+          <span class="legend-chip legend-reserved">Reserved &mdash; held for a booking</span>
+          <span class="legend-chip legend-occupied">Occupied &mdash; a car is recorded here</span>
+          <span class="legend-chip legend-maintenance">Maintenance &mdash; closed</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+      <div class="card-body">
+        <h2 class="h5 fw-semibold mb-2">How the recommendation works</h2>
+        <p class="text-secondary small mb-0">
+          When you ask for a space, the system first removes every space that is closed,
+          incompatible with your vehicle, not accessible when you need it, or already taken for
+          your time. It then ranks what is left by <strong>distance from the entrance</strong>,
+          <strong>floor preference</strong> (lower floors score better) and
+          <strong>vehicle compatibility</strong>, and suggests the best-scoring space. You can
+          always pick a different free space yourself.
+        </p>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <a href="{{ url_for('booking.index') }}" class="btn btn-primary me-2">Book Parking</a>
+      <a href="{{ url_for('main.facilities', mode='quick') }}" class="btn btn-success">Find Parking Now</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

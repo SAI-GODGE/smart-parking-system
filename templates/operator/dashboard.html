@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Operator Panel{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="h3 fw-bold mb-1">Parking Operator Panel</h1>
+    <p class="text-secondary mb-0">Assist drivers, confirm arrivals and process checkouts.</p>
+  </div>
+  <span class="badge text-bg-light border fs-6">{{ current_user.username }} &middot; {{ current_user.display_role }}</span>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card border"><div class="stat-num text-dark">{{ totals.total }}</div>
+      <div class="stat-label">Total spaces</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card border border-success"><div class="stat-num text-success">{{ totals.vacant }}</div>
+      <div class="stat-label">Free</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card border border-primary"><div class="stat-num text-primary">{{ totals.reserved }}</div>
+      <div class="stat-label">Reserved</div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card border border-danger"><div class="stat-num text-danger">{{ totals.occupied }}</div>
+      <div class="stat-label">In use</div></div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <h2 class="h6 fw-semibold mb-3">Find a ticket</h2>
+    <form method="get" class="row g-2">
+      <div class="col-sm-8 col-md-6">
+        <input type="text" class="form-control form-control-lg font-monospace text-uppercase"
+               name="q" value="{{ search_ticket }}" placeholder="Ticket code (PK-...)" maxlength="40">
+      </div>
+      <div class="col-sm-4 col-md-3">
+        <button type="submit" class="btn btn-primary btn-lg w-100">Search</button>
+      </div>
+    </form>
+
+    {% if search_ticket %}
+      {% if search_result %}
+      <div class="border rounded p-3 mt-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+          <div>
+            <div class="fw-semibold">{{ search_result.facility.name }} &middot; {{ search_result.bay.label }}</div>
+            <div class="small text-muted">
+              {{ search_result.vehicle_registration }} &middot; {{ search_result.reservation_code }}
+              &middot; {{ search_result.status_label }}
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            {% if search_result.status == 'booked' %}
+              <form method="post" action="{{ url_for('operator.checkin', reservation_id=search_result.id) }}" data-busy-form>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-success btn-sm" type="submit">Check in</button>
+              </form>
+            {% elif search_result.status == 'checked_in' %}
+              <form method="post" action="{{ url_for('operator.process_checkout', reservation_id=search_result.id) }}" data-busy-form>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-primary btn-sm" type="submit">Check out</button>
+              </form>
+            {% endif %}
+            <a class="btn btn-outline-secondary btn-sm"
+               href="{{ url_for('booking.ticket', ticket_code=search_result.ticket_code) }}">View ticket</a>
+          </div>
+        </div>
+      </div>
+      {% else %}
+        <div class="alert alert-warning mt-3 mb-0">
+          No ticket found with code <strong>{{ search_ticket }}</strong>.
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white">
+    <h2 class="h6 fw-semibold mb-0"><i class="bi bi-geo-alt me-2"></i>Availability by facility</h2>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Facility</th>
+          <th class="text-end">Total</th>
+          <th class="text-end">Free</th>
+          <th class="text-end">Reserved</th>
+          <th class="text-end">In use</th>
+          <th class="text-end">Closed</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in facility_rows %}
+        <tr>
+          <td>{{ row.facility.name }}</td>
+          <td class="text-end">{{ row.counts.total }}</td>
+          <td class="text-end text-success fw-semibold">{{ row.counts.vacant }}</td>
+          <td class="text-end text-primary">{{ row.counts.reserved }}</td>
+          <td class="text-end text-danger">{{ row.counts.occupied }}</td>
+          <td class="text-end text-secondary">{{ row.counts.maintenance }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-primary"
+               href="{{ url_for('quick.parking_facility', facility_id=row.facility.id) }}">Open layout</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white">
+    <h2 class="h6 fw-semibold mb-0"><i class="bi bi-list-check me-2"></i>Active reservations ({{ active|length }})</h2>
+  </div>
+  {% if not active %}
+  <div class="card-body text-muted text-center">No active reservations right now.</div>
+  {% else %}
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Ticket</th>
+          <th>Facility</th>
+          <th>Space</th>
+          <th>Vehicle</th>
+          <th>Window</th>
+          <th>Status</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in active %}
+        <tr>
+          <td class="font-monospace small">{{ r.ticket_code[:10] }}&hellip;</td>
+          <td class="small">{{ r.facility.name }}</td>
+          <td>{{ r.bay.label }}</td>
+          <td>{{ r.vehicle_registration }}</td>
+          <td class="small">{{ r.start_time.strftime('%d %b %I:%M %p').replace(' 0', ' ') }}
+            &rarr; {{ r.end_time.strftime('%d %b %I:%M %p').replace(' 0', ' ') }}</td>
+          <td><span class="badge text-bg-{{ 'primary' if r.status == 'booked' else 'success' }}">{{ r.status_label }}</span></td>
+          <td class="text-end">
+            {% if r.status == 'booked' %}
+              <form method="post" action="{{ url_for('operator.checkin', reservation_id=r.id) }}" class="d-inline" data-busy-form>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-success" type="submit">Check in</button>
+              </form>
+            {% else %}
+              <form method="post" action="{{ url_for('operator.process_checkout', reservation_id=r.id) }}" class="d-inline" data-busy-form>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-primary" type="submit">Check out</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header bg-white">
+    <h2 class="h6 fw-semibold mb-0"><i class="bi bi-clock-history me-2"></i>Recent activity</h2>
+  </div>
+  <ul class="list-group list-group-flush">
+    {% for r in recent %}
+    <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+      <div>
+        <span class="font-monospace small">{{ r.reservation_code }}</span>
+        &middot; {{ r.facility.name }} &middot; {{ r.bay.label }}
+        <span class="text-muted small">&middot; {{ r.vehicle_registration }}</span>
+      </div>
+      <span class="badge text-bg-light border">{{ r.status_label }}</span>
+    </li>
+    {% else %}
+    <li class="list-group-item text-muted">No parking activity yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
