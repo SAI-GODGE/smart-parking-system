@@ -6,17 +6,44 @@
 <h1 class="h3 fw-bold mb-1">Reservations</h1>
 <p class="text-secondary mb-3">All parking reservations recorded in the database (latest 200 shown).</p>
 
-<ul class="nav nav-pills mb-3 flex-wrap gap-1">
-  <li class="nav-item">
-    <a class="nav-link {{ 'active' if not current_status }}" href="{{ url_for('admin.reservations') }}">All</a>
-  </li>
-  {% for s in statuses %}
-    <li class="nav-item">
-      <a class="nav-link {{ 'active' if current_status == s }}"
-         href="{{ url_for('admin.reservations', status=s) }}">{{ labels[s] }}</a>
-    </li>
-  {% endfor %}
-</ul>
+<div class="row g-2 mb-3 align-items-center">
+  <div class="col-12 col-md-7">
+    <ul class="nav nav-pills flex-wrap gap-1">
+      <li class="nav-item">
+        <a class="nav-link {{ 'active' if not current_status }}" href="{{ url_for('admin.reservations', q=search, user_id=user_id) }}">All</a>
+      </li>
+      {% for s in statuses %}
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if current_status == s }}"
+             href="{{ url_for('admin.reservations', status=s, q=search, user_id=user_id) }}">{{ labels[s] }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="col-12 col-md-5">
+    <form method="get" action="{{ url_for('admin.reservations') }}" class="d-flex gap-2">
+      {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+      {% if user_id %}<input type="hidden" name="user_id" value="{{ user_id }}">{% endif %}
+      <div class="input-group input-group-sm">
+        <input type="text" class="form-control" name="q" value="{{ search or '' }}"
+               placeholder="Search by user, vehicle, code...">
+        <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+        {% if search or user_id %}
+          <a href="{{ url_for('admin.reservations', status=current_status) }}" class="btn btn-outline-secondary" title="Clear filters">
+            <i class="bi bi-x-lg"></i>
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if selected_user %}
+  <div class="alert alert-info py-2 d-flex justify-content-between align-items-center mb-3">
+    <span>Showing reservations for user: <strong>{{ selected_user.username }}</strong> ({{ selected_user.email or 'no email' }})</span>
+    <a href="{{ url_for('admin.reservations', status=current_status) }}" class="btn btn-sm btn-outline-dark">Show all users</a>
+  </div>
+{% endif %}
 
 <div class="card shadow-sm">
   <div class="table-responsive">
@@ -24,6 +51,7 @@
       <thead class="table-light">
         <tr>
           <th>Codes</th>
+          <th>User / Customer</th>
           <th>Facility / space</th>
           <th>Vehicle</th>
           <th>Window</th>
@@ -38,6 +66,18 @@
           <td class="font-monospace small">
             <div>{{ r.reservation_code }}</div>
             <div class="text-muted">{{ r.ticket_code[:12] }}&hellip;</div>
+          </td>
+          <td>
+            {% if r.user %}
+              <a href="{{ url_for('admin.user_history', user_id=r.user.id) }}" class="fw-semibold text-decoration-none">
+                <i class="bi bi-person me-1"></i>{{ r.user.username }}
+              </a>
+              {% if r.user.email %}
+                <div class="small text-muted">{{ r.user.email }}</div>
+              {% endif %}
+            {% else %}
+              <span class="badge text-bg-light border text-muted">Guest</span>
+            {% endif %}
           </td>
           <td class="small">
             {{ r.facility.name }}<br>
@@ -86,7 +126,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" class="text-center text-muted py-4">No reservations found.</td></tr>
+        <tr><td colspan="8" class="text-center text-muted py-4">No reservations found.</td></tr>
         {% endfor %}
       </tbody>
     </table>

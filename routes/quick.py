@@ -9,6 +9,7 @@ minimum possible information.
 from datetime import datetime, timedelta
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask_login import current_user
 
 from extensions import db
 from models import ParkingFacility, VehicleType
@@ -81,7 +82,7 @@ def reserve(facility_id):
             start_time=start,
             end_time=end,
             mode="quick",
-            user=None,
+            user=current_user if current_user.is_authenticated else None,
             needs_accessible=needs_accessible,
         )
     except BookingError as exc:

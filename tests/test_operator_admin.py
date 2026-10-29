@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta
 
 from extensions import db
-from models import BayStatus, ParkingFacility, Reservation, ReservationStatus, User
+from models import BayStatus, ParkingFacility, Reservation, ReservationStatus, Role, User
 
 from .conftest import (
     bay_ids,
@@ -211,3 +211,30 @@ def test_driver_is_not_offered_admin_links(app, client):
     assert 'href="/admin' not in nav
     assert 'href="/operator' not in nav
     assert "Administrator" not in nav
+
+
+def test_admin_can_view_user_history(app, client):
+    """Admin can view the full booking history of any user."""
+    admin_id = create_user(app, "rootadmin", role=Role.ADMIN)
+    customer_id = create_user(app, "targetcustomer", role=Role.DRIVER)
+    fid = create_facility(app, "History Lot")
+    bays = bay_ids(app, fid)
+    start, end = next_window()
+
+    make_reservation(
+        app,
+        fid,
+        bays[0],
+        registration="MH-88 HIST 8888",
+        start=start,
+        end=end,
+        user_id=customer_id,
+    )
+
+    login(client, "rootadmin")
+    response = client.get(f"/admin/users/{customer_id}/history")
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "targetcustomer" in html
+    assert "MH-88 HIST 8888" in html
+    assert "History Lot" in html

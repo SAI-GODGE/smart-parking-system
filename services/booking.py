@@ -12,6 +12,7 @@ period, and the bay is released at that moment.
 """
 
 from datetime import datetime, timedelta
+import re
 
 from flask import current_app
 from sqlalchemy.exc import IntegrityError
@@ -109,6 +110,29 @@ def validate_vehicle_details(vehicle_registration, vehicle_type):
         raise BookingError(
             "The vehicle registration number may only contain letters, numbers, spaces, dots and dashes."
         )
+
+    clean = re.sub(r"[\s\-.]+", "", reg.upper())
+    letters = re.findall(r"[A-Z]", clean)
+    digits = re.findall(r"[0-9]", clean)
+    if len(clean) < 4 or len(letters) < 2 or len(digits) < 1:
+        raise BookingError(
+            "Please enter a valid vehicle registration number (e.g. MH 12 AB 1234 or DL 01 A 1234)."
+        )
+
+    # Standard format (state code + RTO + series + number) or BH series
+    pattern_standard = r"^[A-Z]{2}[0-9]{1,2}[A-Z]{0,6}[0-9]{1,4}$"
+    pattern_bh = r"^[0-9]{2}BH[0-9]{4}[A-Z]{1,2}$"
+    pattern_general = r"^[A-Z]{2,4}[0-9]{1,4}[A-Z0-9]{0,6}$"
+
+    if not (
+        re.match(pattern_standard, clean)
+        or re.match(pattern_bh, clean)
+        or re.match(pattern_general, clean)
+    ):
+        raise BookingError(
+            "Invalid vehicle registration number format. Please enter a valid number (e.g. MH 12 AB 1234)."
+        )
+
     if vehicle_type not in VehicleType.BOOKABLE:
         raise BookingError("Please choose your vehicle type.")
     return reg.upper(), vehicle_type
@@ -239,6 +263,29 @@ def _check_duplicate_active(db_session, facility, user, vehicle_registration, st
             )
 
 
+def _check_booking_limits(user, vehicle_registration):
+    """Enforce maximum of 3 active bookings per user or vehicle registration."""
+    if user is not None and getattr(user, "is_authenticated", False):
+        if not getattr(user, "is_admin", False):
+            user_active_count = Reservation.query.filter(
+                Reservation.user_id == user.id,
+                Reservation.status.in_(ReservationStatus.ACTIVE),
+            ).count()
+            if user_active_count >= 3:
+                raise BookingError(
+                    "Booking limit reached: You can have at most 3 active slot reservations at a time."
+                )
+
+    reg_active_count = Reservation.query.filter(
+        func.upper(Reservation.vehicle_registration) == vehicle_registration.upper(),
+        Reservation.status.in_(ReservationStatus.ACTIVE),
+    ).count()
+    if reg_active_count >= 3:
+        raise BookingError(
+            "Booking limit reached: This vehicle already has 3 active slot reservations at a time."
+        )
+
+
 def create_reservation(
     *,
     facility_id,
@@ -267,6 +314,7 @@ def create_reservation(
         bay = db.session.get(ParkingBay, bay_id)
         _check_eligibility(facility, bay, vtype, start_time, end_time, needs_accessible)
         _check_duplicate_active(db.session, facility, user, reg, start_time, end_time)
+        _check_booking_limits(user, reg)
 
         res = Reservation(
             reservation_code=new_reservation_code(),

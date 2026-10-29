@@ -67,7 +67,16 @@ def dashboard():
     active_count = Reservation.query.filter(
         Reservation.status.in_(ReservationStatus.ACTIVE)
     ).count()
-    recent = Reservation.query.order_by(Reservation.created_at.desc()).limit(10).all()
+    recent = (
+        Reservation.query.options(
+            db.joinedload(Reservation.user),
+            db.joinedload(Reservation.facility),
+            db.joinedload(Reservation.bay),
+        )
+        .order_by(Reservation.created_at.desc())
+        .limit(10)
+        .all()
+    )
     user_count = User.query.count()
     return render_template(
         "admin/dashboard.html",
@@ -391,16 +400,38 @@ def bay_status(bay_id):
 @admin_required
 def reservations():
     status = request.args.get("status", "")
-    query = Reservation.query
+    user_id = request.args.get("user_id", type=int)
+    search = (request.args.get("q") or "").strip()
+
+    query = Reservation.query.options(
+        db.joinedload(Reservation.user),
+        db.joinedload(Reservation.facility),
+        db.joinedload(Reservation.bay),
+    )
     if status in ReservationStatus.ALL:
         query = query.filter(Reservation.status == status)
+    if user_id:
+        query = query.filter(Reservation.user_id == user_id)
+    if search:
+        query = query.join(Reservation.user, isouter=True).filter(
+            db.or_(
+                Reservation.vehicle_registration.ilike(f"%{search}%"),
+                Reservation.reservation_code.ilike(f"%{search}%"),
+                Reservation.ticket_code.ilike(f"%{search}%"),
+                User.username.ilike(f"%{search}%"),
+            )
+        )
     rows = query.order_by(Reservation.created_at.desc()).limit(200).all()
+    selected_user = db.session.get(User, user_id) if user_id else None
     return render_template(
         "admin/reservations.html",
         rows=rows,
         statuses=ReservationStatus.ALL,
         labels=ReservationStatus.LABELS,
         current_status=status,
+        search=search,
+        user_id=user_id,
+        selected_user=selected_user,
     )
 
 
@@ -493,6 +524,35 @@ def user_status(user_id):
         "success",
     )
     return redirect(url_for("admin.users"))
+
+
+@bp.route("/users/<int:user_id>/history")
+@admin_required
+def user_history(user_id):
+    user = db.session.get(User, user_id) or abort(404)
+    reservations = (
+        Reservation.query.filter(Reservation.user_id == user.id)
+        .options(
+            db.joinedload(Reservation.facility),
+            db.joinedload(Reservation.bay),
+            db.joinedload(Reservation.transaction),
+        )
+        .order_by(Reservation.created_at.desc())
+        .all()
+    )
+    active_count = sum(1 for r in reservations if r.status in ReservationStatus.ACTIVE)
+    completed_count = sum(1 for r in reservations if r.status == ReservationStatus.COMPLETED)
+    cancelled_count = sum(
+        1 for r in reservations if r.status in (ReservationStatus.CANCELLED, ReservationStatus.EXPIRED)
+    )
+    return render_template(
+        "admin/user_history.html",
+        target_user=user,
+        reservations=reservations,
+        active_count=active_count,
+        completed_count=completed_count,
+        cancelled_count=cancelled_count,
+    )
 
 
 # ---------------------------------------------------------------------------

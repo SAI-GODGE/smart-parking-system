@@ -57,6 +57,17 @@ def create_app(test_config=None):
 
             if seed_if_empty():
                 app.logger.info("Seeded sample parking facilities and demo accounts.")
+            from models import Role, User
+            if not User.query.filter_by(role=Role.ADMIN).first():
+                admin_acc = User(
+                    username="admin",
+                    email="admin@smartparking.local",
+                    role=Role.ADMIN,
+                )
+                admin_acc.set_password("admin1234")
+                db.session.add(admin_acc)
+                db.session.commit()
+                app.logger.info("Created default administrator account 'admin'.")
 
     return app
 

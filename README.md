@@ -123,7 +123,7 @@ Then open <http://127.0.0.1:5000>.
 |------|----------|----------|
 | Driver | `demo` | `demo1234` |
 | Operator | `operator` | `operator1234` |
-| Admin | — | created via `python create_admin.py` |
+| Admin | `admin` | `admin1234` |
 
 ## QR codes
 

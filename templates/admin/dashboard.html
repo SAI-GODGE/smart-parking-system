@@ -103,6 +103,7 @@
       <thead class="table-light">
         <tr>
           <th>Code</th>
+          <th>User</th>
           <th>Facility</th>
           <th>Space</th>
           <th>Vehicle</th>
@@ -115,6 +116,15 @@
         {% for r in recent %}
         <tr>
           <td class="font-monospace small">{{ r.reservation_code }}</td>
+          <td>
+            {% if r.user %}
+              <a href="{{ url_for('admin.user_history', user_id=r.user.id) }}" class="fw-semibold text-decoration-none">
+                <i class="bi bi-person me-1"></i>{{ r.user.username }}
+              </a>
+            {% else %}
+              <span class="badge text-bg-light border text-muted">Guest</span>
+            {% endif %}
+          </td>
           <td class="small">{{ r.facility.name }}</td>
           <td>{{ r.bay.label }}</td>
           <td>{{ r.vehicle_registration }}</td>
@@ -123,7 +133,7 @@
           <td class="small">{{ r.created_at.strftime('%d %b %H:%M') }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="7" class="text-center text-muted py-3">No activity yet.</td></tr>
+        <tr><td colspan="8" class="text-center text-muted py-3">No activity yet.</td></tr>
         {% endfor %}
       </tbody>
     </table>

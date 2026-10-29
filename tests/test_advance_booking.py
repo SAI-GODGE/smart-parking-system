@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta
 
 from extensions import db
-from models import BayStatus, ParkingBay, Reservation, ReservationStatus
+from models import BayStatus, ParkingBay, Reservation, ReservationStatus, User
 from services.booking import BookingError, create_reservation
 
 from .conftest import (
@@ -259,3 +259,51 @@ def test_vehicle_details_are_validated(app, client):
     )
     follow = client.get(response.headers["Location"])
     assert "may only contain letters" in follow.get_data(as_text=True)
+
+    # Random numbers like "1234" must be rejected
+    response = _post_confirm(client, fid, start, end, bays[0], "1234")
+    follow = client.get(response.headers["Location"])
+    assert "valid vehicle registration number" in follow.get_data(as_text=True).lower() or "format" in follow.get_data(as_text=True).lower()
+
+
+def test_user_cannot_book_more_than_three_active_slots(app):
+    """A user or vehicle can have at most 3 active slot reservations."""
+    fid = create_facility(app, "Limit Lot", bays=6)
+    bays = bay_ids(app, fid)
+    user_id = create_user(app, "multibooker")
+    user = db.session.get(User, user_id)
+    base = (datetime.now() + timedelta(days=2)).replace(hour=10, minute=0, second=0, microsecond=0)
+
+    # First 3 bookings at non-overlapping windows succeed
+    for i in range(3):
+        w_start = base + timedelta(hours=i * 3)
+        create_reservation(
+            facility_id=fid,
+            bay_id=bays[i],
+            vehicle_registration=f"MH-10 CAR {i+1:04d}",
+            vehicle_type="car",
+            start_time=w_start,
+            end_time=w_start + timedelta(hours=2),
+            mode="advance",
+            user=user,
+        )
+
+    # 4th booking must be rejected
+    try:
+        w_start = base + timedelta(hours=10)
+        create_reservation(
+            facility_id=fid,
+            bay_id=bays[3],
+            vehicle_registration="MH-10 CAR 0004",
+            vehicle_type="car",
+            start_time=w_start,
+            end_time=w_start + timedelta(hours=2),
+            mode="advance",
+            user=user,
+        )
+        passed = True
+    except BookingError as exc:
+        passed = False
+        assert "at most 3 active" in exc.user_message.lower()
+
+    assert not passed, "4th active reservation must be rejected"

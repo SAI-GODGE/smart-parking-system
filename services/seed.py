@@ -58,6 +58,7 @@ FACILITY_SPECS = [
 DEMO_USERS = [
     ("demo", "demo1234", Role.DRIVER, "demo@example.com"),
     ("operator", "operator1234", Role.OPERATOR, "operator@example.com"),
+    ("admin", "admin1234", Role.ADMIN, "admin@smartparking.local"),
 ]
 
 
